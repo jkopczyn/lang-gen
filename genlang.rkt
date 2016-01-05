@@ -25,101 +25,224 @@
     [else seq]))
 
 ; LANGUAGE DEF
-(struct Lang (syl rep raw) #:transparent)
+(struct Lang (name syl rep raw) #:transparent)
 
-(define Tamadh
-  (Lang
-   (λ () 
-     (let* ([cn (RL 30 '(t k x d b p m n s v r l h f))]
-            [vw (RL 30 '(A E I a e i o O y J Y j u w))]
-            ; ^Categories^ vSyllable Typesv
-            [syls (RL 30 `((,cn ,vw) (,cn ,vw ,cn) (,vw) (,vw ,cn)))])
-       (apply string-append (map symbol->string (map one-of (one-of syls))))))
-   (λ (wrd) 
-     (regexp-replaces 
-      wrd
-      '([#rx"O$" "u"] 
-        [#rx"^y" "Y"] [#rx"bb" "b"] [#rx"pp" "p"] [#rx"xx" "x"]
-        [#rx"a([AEIaeioOyJYju])" "A\\1"] [#rx"i([AEIaeioOyJYju])" "I\\1"] [#rx"e([AEIaeioOyJYju])" "E\\1"]
-        [#rx"a" "â"] [#rx"A" "á"] [#rx"e" "ê"] [#rx"E" "é"] [#rx"i" "î"] [#rx"I" "í"] [#rx"o" "ó"] [#rx"O" "ä"] 
-        [#rx"y" "ý"] [#rx"Y" "áì"] [#rx"j" "êì"] [#rx"J" "éì"] [#rx"u" "äu"] 
-        [#rx"b" "dh"] [#rx"p" "th"] [#rx"x" "hr"])))
-   (λ ([n 3])
-     (apply string-append (build-list n (λ (n) ((Lang-syl Tamadh))))))))
+(define-syntax deflang
+  (syntax-rules ()
+    [(deflang «name» «syl» «rep»)
+     (define «name»
+       (Lang (quote «name») «syl» «rep»
+             (λ ([n 3])
+               (apply string-append (build-list n (λ (n) ((Lang-syl «name»))))))))]))
 
-(define Ertydon
-  (Lang
-   (λ ()
-     (let* ([c (RL 30 '(r l n m k s p d j f θ t g))]
-            [w (RL 30 '(k p d f θ t g))]
-            [v (RL 30 '(a i e ei ai o u))]
-            
-            [syls (RL 30 `((,v) (,v h) (,c ,v) (,c ,v ,c) (,c ,v h) (,v ,c) (,w r ,v) (,w r ,v ,c) (,w r ,v h)))])
-       (apply string-append (map symbol->string (map one-of (one-of syls))))))
-   (λ (wrd)
-     (regexp-replaces
-      wrd
-      '([#rx"θ" "th"] [#px"(.)\\1" "\\1"] [#rx"([^aeo])h" "\\1"])))
-   (λ ([n 3]) 
-     (apply string-append (build-list n (λ (n) ((Lang-syl Ertydon))))))))
+(deflang Tamadh
+  (λ () 
+    (let* ([cn (RL 30 '(t m n s v r l k x d b p h f))]
+           [vw (RL 30 '(A E I a e i o O y J Y j u w))]
+           ; ^Categories^ vSyllable Typesv
+           [syls (RL 30 `((,cn ,vw) (,cn ,vw ,cn) (,vw) (,vw ,cn)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  (λ (wrd) 
+    (regexp-replaces 
+     wrd
+     '([#rx"O$" "u"] 
+       [#rx"^y" "Y"] [#rx"bb" "b"] [#rx"pp" "p"] [#rx"xx" "x"]
+       [#rx"a([AEIaeioOyJYju])" "A\\1"] [#rx"i([AEIaeioOyJYju])" "I\\1"] [#rx"e([AEIaeioOyJYju])" "E\\1"]
+       [#rx"a" "â"] [#rx"A" "á"] [#rx"e" "ê"] [#rx"E" "é"] [#rx"i" "î"] [#rx"I" "í"] [#rx"o" "ó"] [#rx"O" "ä"] 
+       [#rx"y" "ý"] [#rx"Y" "áì"] [#rx"j" "êì"] [#rx"J" "éì"] [#rx"u" "äu"] 
+       [#rx"b" "dh"] [#rx"p" "th"] [#rx"x" "hr"]))))
 
-(define Lat
-  (Lang
-   (λ ()
-     (let* ([cn '(b c d f g h j k l m n p q r s t v w x y z 
-                    ch sh th ts st)]
-            [vw '(a e i o u y)]
-            [syls (RL 30 `((,cn ,vw) (,cn ,vw ,cn) (,vw) (,vw ,cn)))])
-       (apply string-append (map symbol->string (map one-of (one-of syls))))))
-   identity
-   (λ ([n 3])
-     (apply string-append (build-list n (λ (n) ((Lang-syl Lat))))))))
+(deflang Silsi
+  (λ ()
+    (let* ([cn '(s l n r f v m t d p k b dh th z)]
+           [fcn (RL 15 (append cn '(h)))]
+           [pcn (RL 15 (append cn '(nn rr ss ll ff mm zz)))]
+           [avw (RL 30 '(é í á ä ê â î ú ó))]
+           [yvw (RL 30 '(í ê ó ä á é ú))]
+           [syls (RL 30 `((,fcn ,avw) (,avw ,pcn) (,fcn ,avw ,pcn) (,avw)
+                                      (,fcn y ,yvw) (,fcn y ,yvw ,pcn) (y ,yvw ,pcn) (y ,yvw)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  (λ (wrd)
+    (regexp-replaces
+     wrd
+     '([#rx"lll+" "ll"] [#rx"rrr+" "rr"] [#rx"nnn+" "nn"] [#rx"mmm+" "mm"] 
+                        [#rx"sss+" "ss"] [#rx"fff+" "ff"] [#rx"zzz+" "zz"]))))
 
-(define Dwarvish
-  (Lang
-   (λ ()
-     (let* ([cn '(d p t k h n m s c v l r b st sh j w f ch g z x)]
-            [fcn (RL 15 (append cn '(bh)))]
-            [pcn (RL 15 (append cn '(nd)))]
-            [vw (RL 30 '(e a i u o ae))]
-            [syls (RL 30 `((,vw ,pcn) (,fcn ,vw) (,fcn ,vw ,pcn) (,vw)))])
-       (apply string-append (map symbol->string (map one-of (one-of syls))))))
-   (λ (wrd)
-     (regexp-replaces
-      wrd
-      '()))
-   (λ ([n 3])
-     (apply string-append (build-list n (λ (n) ((Lang-syl Dwarvish))))))))
+(deflang Ertydon
+  (λ ()
+    (let* ([c (RL 30 '(r l n m k s p d j f θ t g))]
+           [w (RL 30 '(k p d f θ t g))]
+           [v (RL 30 '(a i e ei ai o u))]
+           
+           [syls (RL 30 `((,v) (,v h) (,c ,v) (,c ,v ,c) (,c ,v h) (,v ,c) (,w r ,v) (,w r ,v ,c) (,w r ,v h)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  (λ (wrd)
+    (regexp-replaces
+     wrd
+     '([#rx"θ" "th"] [#px"(.)\\1" "\\1"] [#rx"([^aeo])h" "\\1"]))))
 
-(define Skif
-  (Lang
-   (λ ()
-     (let* ([cn (RL 15 '(s k f c d t n l r m v h nd sk y st kh sh p b j w g z x))]
-            [vw (RL 15 '(e a i u o))]
-            [syls (RL 30 `((,cn ,vw) (,cn ,vw ,cn) (,vw ,cn) (,vw)))])
-       (apply string-append (map symbol->string (map one-of (one-of syls))))))
-   (λ (wrd)
-     (regexp-replaces
-      wrd
-      '([#rx"^nd" "d"])))
-   (λ ([n 3])
-     (apply string-append (build-list n (λ (n) ((Lang-syl Skif))))))))
+#|
+ | Must end in a consonant. 
+ | Pairs of consonants (and no more than that) in the middle of words only, not to start or end. 
+ | Syllables may begin with consonants or vowels and contain only one vowel. 
+ | H can't end a word.
+ | let's say that ch isn't allowed to be in clusters.
+ | Aa syllables are always emphasized so you don't want them next to each other.
+ | aa, a, e, i, o, u, Y in Ryganaavlan only...
+ | k, s, p, r, v, sh, h, n, t, d, b, f, l, th, ch, G and Y in Ryganaavlan only
+ |#
+(deflang Leraal
+  (λ ()
+    (let* ([cn '(m k s p r v sh n t d b f l th h ch)]
+           [fcn (RL 15 (append '(h ch) cn))]
+           [pcn (RL 15 (append '(h) cn))]
+           [vw (RL 30 '(e a i aa o u))]
+           
+           [syls (RL 30 `((,vw ,pcn) (,fcn ,vw ,pcn)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  (λ (wrd)
+    (regexp-replaces
+     wrd
+     '([#px"([^a])\\1" "\\1"] [#rx"aa(..?aa)" "a\\1"]))))
 
-(define Anavasi
-  (Lang
-   (λ ()
-     (let* ([cn '(n v d t p k m h l r s c b j z)]
-            [fcn (RL 15 (append cn '()))]
-            [pcn (RL 15 (append cn '()))]
-            [vw (RL 30 '(i a e u o ae))]
-            [syls (RL 30 `((,vw ,pcn) (,fcn ,vw) (,fcn ,vw ,pcn) (,vw)))])
-       (apply string-append (map symbol->string (map one-of (one-of syls))))))
-   (λ (wrd)
-     (regexp-replaces
-      wrd
-      '([#rx"aee" "ae"] [#rx"aae" "ae"])))
-   (λ ([n 3])
-     (apply string-append (build-list n (λ (n) ((Lang-syl Anavasi))))))))
+(deflang Lat
+  (λ ()
+    (let* ([cn '(b c d f g h j k l m n p q r s t v w x y z 
+                   ch sh th ts st)]
+           [vw '(a e i o u y)]
+           [syls (RL 30 `((,cn ,vw) (,cn ,vw ,cn) (,vw) (,vw ,cn)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  identity)
+
+(deflang Dwarvish
+  (λ ()
+    (let* ([cn '(d p t k h n m s c v l r b st sh j w f ch g z x)]
+           [fcn (RL 15 (append cn '(bh rh)))]
+           [pcn (RL 15 (append cn '(nd)))]
+           [vw (RL 30 '(e a i u o ae))]
+           [syls (RL 30 `((,vw ,pcn) (,fcn ,vw) (,fcn ,vw ,pcn) (,vw)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  (λ (wrd)
+    (regexp-replaces
+     wrd
+     '())))
+
+(deflang Skif
+  (λ ()
+    (let* ([cn (RL 15 '(s k f c d t n l r m v h nd sk y st kh sh p b j w g z x))]
+           [vw (RL 15 '(e a i u o))]
+           [syls (RL 30 `((,cn ,vw) (,cn ,vw ,cn) (,vw ,cn) (,vw)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  (λ (wrd)
+    (regexp-replaces
+     wrd
+     '([#rx"^nd" "d"]))))
+
+(deflang Anavasi
+  (λ ()
+    (let* ([cn '(n v d t p k m h l r s c b j z)]
+           [fcn (RL 15 (append cn '()))]
+           [pcn (RL 15 (append cn '()))]
+           [vw (RL 30 '(i a e u o ae))]
+           [syls (RL 30 `((,vw ,pcn) (,fcn ,vw) (,fcn ,vw ,pcn) (,vw)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  (λ (wrd)
+    (regexp-replaces
+     wrd
+     '([#rx"aee" "ae"] [#rx"aae" "ae"]))))
+
+(deflang Aiha
+  (λ ()
+    (let* ([cn '(l r n m p f s t h k d v y b w sh ts)]
+           [fcn (RL 15 (append cn '(pr)))]
+           [pcn (RL 15 (append cn '(ll rr mm nn ns)))]
+           [vw (RL 30 '(a i e u o ae ai au))]
+           [syls (RL 30 `((,fcn ,vw) (,vw ,pcn) (,fcn ,vw ,pcn) (,vw)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  (λ (wrd)
+    (regexp-replaces
+     wrd
+     '([#rx"lll+" "ll"] [#rx"rrr+" "rr"] [#rx"nnn+" "nn"] [#rx"mmm+" "mm"]))))
+
+(deflang Elannwyn 
+  (λ ()
+    (let* ([cn '(m n r l k d sh s t w h j z v f b ts)]
+           [fcn (RL 15 (append cn '()))]
+           [pcn (RL 15 (append cn '(y nn mm)))]
+           [vw (RL 30 '(e i a o u uu ae))]
+           [syls (RL 30 `((,vw ,pcn) (,fcn ,vw) (,fcn ,vw ,pcn) (,vw)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  (λ (wrd)
+    (regexp-replaces
+     wrd
+     '([#rx"aee" "ae"] [#rx"aae" "ae"] [#rx"nnn+" "nn"] [#rx"mmm+" "mm"]))))
+
+(deflang Aluvai
+  (λ ()
+    (let* ([cn '(s f z d v th t k p l n r m b sh ch j w sk)]
+           [fcn (RL 15 (append cn '(kh)))]
+           [pcn (RL 15 (append cn '(ss rr)))]
+           [vw (RL 30 '(i e a y u o ae ai))]
+           [syls (RL 30 `((,vw ,pcn) (,fcn ,vw) (,fcn ,vw ,pcn) (,vw)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  (λ (wrd)
+    (regexp-replaces
+     wrd
+     '())))
+
+(deflang Ceirene
+  (λ ()
+    (let* ([cn '(m r n l s t v c d k p f th b sh j w ts sk)]
+           [fcn (RL 15 (append cn '()))]
+           [pcn (RL 15 (append cn '(ns tt)))]
+           [vw (RL 30 '(a e i o u y ai ae))]
+           [syls (RL 30 `((,vw ,pcn) (,fcn ,vw) (,fcn ,vw ,pcn) (,vw)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  (λ (wrd)
+    (regexp-replaces
+     wrd
+     '())))
+
+(deflang Mahlirou ; Antimoun Joralina Taphinieu Dianaevo Adianera
+  (λ ()
+    (let* ([cn '(t c j m n h l r ph d s v b k p y w)]
+           [fcn (RL 15 (append cn '(ch)))]
+           [pcn (RL 15 (append cn '()))]
+           [vw '(i a e u o eu au ae)]
+           [vvw (RL 30 (append vw '()))]
+           [pvw (RL 30 (append vw '(iu ou ya)))]
+           [syls (RL 30 `((,fcn ,pvw) (,vvw ,pcn) (,fcn ,pvw ,pcn) (,vvw)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  (λ (wrd)
+    (regexp-replaces
+     wrd
+     '([#rx"php?h" "ph"]))))
+
+(deflang Obsidian
+  (λ ()
+    (let* ([cn '(l n s t m r d f sh th g)]
+           [fcn (RL 15 (append cn '(k b c h j p v w y)))]
+           [pcn (RL 15 (append cn '(ss nd ph st)))]
+           [vw (RL 30 '(i e a u o y))]
+           [syls (RL 30 `((,fcn ,vw) (,vw ,pcn) (,fcn ,vw ,pcn) (,vw)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  (λ (wrd)
+    (regexp-replaces
+     wrd
+     '())))
+
+(deflang Elemental ; I should write more comments because I have no memory of what this one was for
+  (λ ()
+    (let* ([cn '(v r l t k m n s sh f d p th b z)]
+           [fcn (RL 15 (append cn '(w y)))]
+           [pcn (RL 15 (append cn '(h)))]
+           [vw (RL 30 '(e a i u o ei ae iu))]
+           [syls (RL 30 `((,fcn ,vw) (,vw ,pcn) (,fcn ,vw ,pcn) (,vw)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  (λ (wrd)
+    (regexp-replaces
+     wrd
+     '([#rx"shh" "sh"]))))
 
 (define (word lang [wn 4] [wr #t])
   ((Lang-rep lang) ((Lang-raw lang) (if wr (add1 (random wn)) wn))))
@@ -146,6 +269,15 @@
         (matches-name lang exprs wn wr))))
 (define (matches-names lang exprs n [wn 4] [wr #t])
   (build-list n (λ (n) (matches-name lang exprs wn wr))))
+(define (match-names-in langs exprs n [wn 4] [incname #t] [wr #t])
+  (map (λ (lang) 
+         (let ([nlist (matches-names lang exprs n wn wr)]) 
+           (if incname
+               (list (Lang-name lang) nlist)
+               nlist))) 
+       langs))
+(define langlist
+  (list Lat Ertydon Dwarvish Skif Anavasi Aiha Aluvai Ceirene Mahlirou Obsidian Elemental))
 
 (define (text lang n [wn 4] [wr #t])
   (apply string-append (map (λ (s) (string-append s " ")) (words lang n wn wr))))
