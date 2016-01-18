@@ -244,6 +244,21 @@
      wrd
      '([#rx"shh" "sh"]))))
 
+(deflang Peskae
+  (λ ()
+    (let* ([cn '(m r t s f l n k z d c h p v ts st sk)]
+           [fcn (RL 15 (append cn '(kh)))]
+           [pcn (RL 15 (append cn '(nn rr ss ll ff mm vv zz)))]
+           [vw '(e a i u o ei ai ae)]
+           [vvw (RL 30 (append vw '()))]
+           [pvw (RL 30 (append vw '(ya yi yu yo)))]
+           [syls (RL 30 `((,fcn ,pvw) (,vvw ,pcn) (,fcn ,pvw ,pcn) (,vvw)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  (λ (wrd)
+    (regexp-replaces
+     wrd
+     '())))
+
 (define (word lang [wn 4] [wr #t])
   ((Lang-rep lang) ((Lang-raw lang) (if wr (add1 (random wn)) wn))))
 (define (name lang [wn 4] [wr #t])
@@ -277,7 +292,7 @@
                nlist))) 
        langs))
 (define langlist
-  (list Lat Ertydon Dwarvish Skif Anavasi Aiha Aluvai Ceirene Mahlirou Obsidian Elemental))
+  (list Lat Ertydon Dwarvish Skif Anavasi Aiha Aluvai Ceirene Mahlirou Obsidian Elemental Peskae))
 
 (define (text lang n [wn 4] [wr #t])
   (apply string-append (map (λ (s) (string-append s " ")) (words lang n wn wr))))
