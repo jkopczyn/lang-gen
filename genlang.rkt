@@ -259,6 +259,22 @@
      wrd
      '())))
 
+(deflang Gnomish
+  (λ ()
+    (let* ([cn '(l r t d n m k s v f h p b w z th)]
+           [fcn (RL 15 (append cn '(pr qu)))]
+           [pcn (RL 15 (append cn '(ll rr ss st)))]
+           [vw  '(i o e a u)]
+           [vvw (RL 30 (append vw '()))]
+           [pvw (RL 30 (append vw '(y)))]
+           [syls (RL 30 `((,fcn ,pvw ,pcn) (,fcn ,pvw) (,vvw ,pcn) (,vvw)))])
+      (apply string-append (map symbol->string (map one-of (one-of syls))))))
+  (λ (wrd)
+    (regexp-replaces
+     wrd
+     '([#rx"lll+" "ll"] [#rx"rrr+" "rr"] [#rx"sss+" "ss"] [#rx"ss+t" "st"]))))
+
+
 (define (word lang [wn 4] [wr #t])
   ((Lang-rep lang) ((Lang-raw lang) (if wr (add1 (random wn)) wn))))
 (define (name lang [wn 4] [wr #t])
