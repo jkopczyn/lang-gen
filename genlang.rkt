@@ -261,7 +261,7 @@
 
 (deflang Gnomish
   (λ ()
-    (let* ([cn '(l r t d n m k s v f h p b w z th)]
+    (let* ([cn '(l r t d n m k s v f h p b w z j th)]
            [fcn (RL 15 (append cn '(pr qu)))]
            [pcn (RL 15 (append cn '(ll rr ss st)))]
            [vw  '(i o e a u)]
